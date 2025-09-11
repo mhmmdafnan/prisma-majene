@@ -295,10 +295,6 @@ export default function Dashboard() {
     const fetchFilters = async () => {
       setLoading(true);
       await getFilters();
-
-      // kalau mau langsung isi data pertama kali
-      await getData();
-
       setLoading(false);
     };
     fetchFilters();
@@ -310,7 +306,6 @@ export default function Dashboard() {
       const fetchData = async () => {
         setLoading(true);
         await selectFilterHandle();
-        await getData();
         setLoading(false);
       };
       fetchData();
