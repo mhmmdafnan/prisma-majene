@@ -99,7 +99,7 @@ export default function Dashboard() {
   const lineChartRef = useRef(null);
 
   const getDefaultKey = (page, selectedIndicator) => {
-    if (page === "harga") return "Harga";
+    // if (page === "harga") return "Harga";
     if (page === "ihk") return "IHK";
     return selectedIndicator || "Inflasi YoY"; // fallback kalau dashboard utama
   };
@@ -239,13 +239,14 @@ export default function Dashboard() {
 
   let titleHeader = "";
   let content = [];
-  if (page === "harga") {
-    titleHeader = "Dashboard Harga";
-    content = [
-      { title: "Harga", value: valueHarga },
-      { title: "Inflasi M-to-M", value: valueMtM },
-    ];
-  } else if (page === "ihk") {
+  // if (page === "harga") {
+  //   titleHeader = "Dashboard Harga";
+  //   content = [
+  //     { title: "Harga", value: valueHarga },
+  //     { title: "Inflasi M-to-M", value: valueMtM },
+  //   ];
+  // } else 
+    if (page === "ihk") {
     titleHeader = "Dashboard IHK";
     content = [
       { title: "IHK", value: valueIHK },
@@ -367,7 +368,7 @@ export default function Dashboard() {
                 onChange={(value) => setSelectedBulan(value)}
                 value={selectedBulan}
               />
-              {!page && (
+              {page !== "ihk" && (
                 <div className="flex flex-col gap-2">
                   <FilterSelect
                     filter="Indikator"
@@ -385,7 +386,7 @@ export default function Dashboard() {
         <div className="w-full flex justify-center items-center py-4">
           <div
             className={`grid gap-x-20 ${
-              page ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 md:grid-cols-3"
+              page === "ihk" ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 md:grid-cols-3"
             }`}
           >
             {content.map((item, idx) => (

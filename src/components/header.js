@@ -38,18 +38,17 @@ export default function Header() {
       href: "/?page=ihk",
       page: "ihk",
     },
-    {
-      name: "Harga",
-      icon: <HiCurrencyDollar size={18} />,
-      href: "/?page=harga",
-      page: "harga",
-    },
+    // {
+    //   name: "Harga",
+    //   icon: <HiCurrencyDollar size={18} />,
+    //   href: "/?page=harga",
+    //   page: "harga",
+    // },
   ];
 
   const renderLink = (item) => {
     const isActive = page === item.page;
-    const baseClass =
-      "flex items-center gap-2 hover:text-[#FF9B00]";
+    const baseClass = "flex items-center gap-2 hover:text-[#FF9B00]";
     const activeClass = " text-[#FF9B00] font-semibold";
     return (
       <Link
@@ -72,14 +71,15 @@ export default function Header() {
       <div className="max-w-7xl px-4 sm:px-6 lg:px-8 py-2">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex items-center">
-            <img src="/favicon.png" className="w-18" alt="Logo" />
-            <div className="ml-3 flex flex-col">
+          <div className="items-center">
+            <img src="/images/Logo.png" className="w-40" alt="Logo" />
+            {/* <img src="/favicon2.png" className="w-18" alt="Logo" /> */}
+            {/* <div className="ml-3 flex flex-col">
               <span className="font-bold text-lg italic">
-                Dashboard Data Harga
+                
               </span>
-              <span className="text-sm italic">BPS KAB MAJENE</span>
-            </div>
+            </div> */}
+            <span className="text-xs text-[#001f3d] italic font-bold">PORTAL INFLASI MAJENE</span>
           </div>
 
           {/* Navigation desktop */}
