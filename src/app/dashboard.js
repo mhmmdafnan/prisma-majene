@@ -83,8 +83,8 @@ export default function Dashboard() {
   const [tahun, setTahun] = useState([]);
   const [bulan, setBulan] = useState([]);
   const [selectedKomoditas, setSelectedKomoditas] = useState("UMUM");
-  const [selectedTahun, setSelectedTahun] = useState(currentYear);
-  const [selectedBulan, setSelectedBulan] = useState(String(currentMonth - 1));
+  const [selectedTahun, setSelectedTahun] = useState();
+  const [selectedBulan, setSelectedBulan] = useState();
   // const [selectedBulan, setSelectedBulan] = useState("7");
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
@@ -103,6 +103,11 @@ export default function Dashboard() {
     if (page === "ihk") return "IHK";
     return selectedIndicator || "Inflasi YoY"; // fallback kalau dashboard utama
   };
+
+  const isFilterReady =
+    Boolean(selectedKomoditas) &&
+    Boolean(selectedTahun) &&
+    Boolean(selectedBulan);
 
   // Fungsi download grafik PNG
   const downloadLineChart = () => {
@@ -230,6 +235,7 @@ export default function Dashboard() {
     selectedBulan,
     selectedIndicator
   );
+  // const [topAndil, setTopAndil] = useState([]);
 
   let titleHeader = "";
   let content = [];
@@ -295,6 +301,7 @@ export default function Dashboard() {
     const fetchFilters = async () => {
       setLoading(true);
       await getFilters();
+      await getData();
       setLoading(false);
     };
     fetchFilters();
@@ -302,17 +309,18 @@ export default function Dashboard() {
 
   // Kalau filter berubah → ambil data
   useEffect(() => {
-    if (selectedKomoditas && selectedTahun && selectedBulan) {
-      const fetchData = async () => {
-        setLoading(true);
-        await selectFilterHandle();
-        setLoading(false);
-      };
-      fetchData();
-    }
+    if (!isFilterReady) return;
+
+    const fetchFilteredData = async () => {
+      setLoading(true);
+      await selectFilterHandle();
+      await getData();
+      setLoading(false);
+    };
+
+    fetchFilteredData();
   }, [selectedKomoditas, selectedTahun, selectedBulan]);
 
-  // Kalau page/indikator berubah → set dataKey
   useEffect(() => {
     const currentPage = searchParams.get("page");
     setPage(currentPage);
@@ -320,7 +328,7 @@ export default function Dashboard() {
     const newKey = getDefaultKey(currentPage, selectedIndicator);
     setDataKey(newKey);
 
-    // kalau pindah page butuh data baru
+    // fetch graph khusus halaman harga / ihk
     if (currentPage) {
       setLoading(true);
       getData().finally(() => setLoading(false));
