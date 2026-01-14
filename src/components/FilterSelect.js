@@ -33,7 +33,7 @@ export default function FilterSelect({ filter, options, value, onChange }) {
             : state.isFocused
             ? "#fff7ed" // orange-50
             : "#fff",
-          color: state.isSelected ? "#fff" : "#111827", // white / gray-900
+          color: state.isSelected ? "#fff" : "#001f3d", // white / gray-900
           cursor: "pointer",
         }),
         placeholder: (base) => ({

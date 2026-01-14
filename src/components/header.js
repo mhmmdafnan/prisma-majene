@@ -48,7 +48,7 @@ export default function Header() {
 
   const renderLink = (item) => {
     const isActive = page === item.page;
-    const baseClass = "flex items-center gap-2 hover:text-[#FF9B00]";
+    const baseClass = "flex items-center text-[#001f3d] gap-2 hover:text-[#FF9B00]";
     const activeClass = " text-[#FF9B00] font-semibold";
     return (
       <Link
@@ -64,8 +64,8 @@ export default function Header() {
 
   return (
     <header
-      className={`sticky top-2 z-50 mx-auto max-w-7xl rounded-2xl shadow-md transition-colors duration-300 ${
-        isScrolled ? "bg-transparent" : "bg-white"
+      className={`sticky top-2 z-50 mx-auto max-w-7xl rounded-2xl border border-[#001f3d]/10 backdrop-blur-sm shadow-2xl shadow-black/5 transition-colors duration-300 ${
+        isScrolled ? "bg-transparent" : "bg-white/90 "
       }`}
     >
       <div className="max-w-7xl px-4 sm:px-6 lg:px-8 py-2">
@@ -91,7 +91,7 @@ export default function Header() {
           <div className="md:hidden">
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="text-gray-700 focus:outline-none"
+              className="text-[#001f3d] focus:outline-none"
             >
               {menuOpen ? <HiX size={24} /> : <HiMenu size={24} />}
             </button>

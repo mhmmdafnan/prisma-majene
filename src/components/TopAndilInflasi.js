@@ -87,7 +87,7 @@ export default function TopAndilInflasi({ data, title }) {
     <>
       {/* <div className="w-full h-[250px] sm:h-[350px] lg:h-[450px]"> */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold mb-4">
+        <h2 className="text-xl font-semibold mb-4 text-[#001f3d]">
           Komoditas Penyumbang Inflasi (Andil {title.split(" ")[1]})
         </h2>
         <div className="flex gap-2">

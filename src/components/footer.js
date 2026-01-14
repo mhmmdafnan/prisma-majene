@@ -2,7 +2,7 @@
 
 export default function Footer() {
   return (
-    <footer className="bg-white max-w-7xl px-6 py-2 mx-auto text-gray-200 mt-10 rounded-2xl">
+    <footer className="bg-white max-w-7xl px-6 py-2 mx-auto mt-10 rounded-2xl">
       <div className=" ">
         <div className="text-center text-xs text-gray-500">
           {/* Brand */}

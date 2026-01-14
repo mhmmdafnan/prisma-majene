@@ -23,12 +23,12 @@ export default function ValueContainer({ title, value }) {
   };
 
   return (
-    <div className="bg-white shadow-xl rounded-2xl pb-6 mb-6">
+    <div className="bg-white/90 border border-[#001f3d]/10 shadow-2xl shadow-black/10 rounded-2xl pb-6 mb-6">
       {/* Judul card */}
-      <p className="text-md px-4 py-2">{title ? title : "-"}</p>
+      <p className="text-md text-[#001f3d] px-4 py-2">{title ? title : "-"}</p>
 
       {/* Nilai rata tengah */}
-      <div className="flex items-center justify-center text-4xl font-bold px-10 w-60">
+      <div className="flex items-center justify-center text-4xl text-[#001f3d] font-bold px-10 w-60">
         {formatValue(value)}
       </div>
     </div>

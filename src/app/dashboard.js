@@ -245,8 +245,8 @@ export default function Dashboard() {
   //     { title: "Harga", value: valueHarga },
   //     { title: "Inflasi M-to-M", value: valueMtM },
   //   ];
-  // } else 
-    if (page === "ihk") {
+  // } else
+  if (page === "ihk") {
     titleHeader = "Dashboard IHK";
     content = [
       { title: "IHK", value: valueIHK },
@@ -337,16 +337,17 @@ export default function Dashboard() {
   }, [searchParams, selectedIndicator]);
 
   return (
-    <div className="bg-gradient-to-b from-[#ffe97d9b] to-[#fcd498]">
+    <div className="bg-gradient-to-br from-[#f8e269] via-[#fff7cf] to-[#FF9B00]">
       {/* <div className="p-6"> */}
       <Header />
       {/* </div> */}
       {loading && <Loading />}
       <div className="p-6 space-y-4 max-w-7xl min-h-screen mx-auto">
-        <h1 className="text-2xl font-bold">{titleHeader}</h1>
+        <h1 className="text-2xl text-[#001f3d] font-bold">{titleHeader}</h1>
 
-        <div className="bg-white shadow-md rounded-2xl p-6 ">
-          <h1 className="text-xl font-semibold mb-2">Filter</h1>
+        <div
+          className="bg-white/90 border border-[#001f3d]/10 shadow-2xl shadow-black/5 rounded-2xl p-6 ">
+          <h1 className="text-xl text-[#001f3d] font-semibold mb-2">Filter</h1>
           <div className="flex flex-col gap-4 lg:flex-row justify-center items-center">
             {/* Filter Group */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:space-x-4 gap-4">
@@ -386,7 +387,9 @@ export default function Dashboard() {
         <div className="w-full flex justify-center items-center py-4">
           <div
             className={`grid gap-x-20 ${
-              page === "ihk" ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 md:grid-cols-3"
+              page === "ihk"
+                ? "grid-cols-1 md:grid-cols-2"
+                : "grid-cols-1 md:grid-cols-3"
             }`}
           >
             {content.map((item, idx) => (
@@ -396,9 +399,9 @@ export default function Dashboard() {
         </div>
 
         {/* Chart */}
-        <div className="bg-white shadow-md rounded-2xl p-6 ">
+        <div className="bg-white/90 border border-[#001f3d]/10 shadow-2xl shadow-black/5 rounded-2xl p-6 ">
           <div className="mb-4 flex flex-col md:flex-row justify-between items-center">
-            <h2 className="text-xl font-semibold mb-4">
+            <h2 className="text-xl text-[#001f3d] font-semibold mb-4">
               Grafik {dataKey} Komoditas {selectedKomoditas} Bulan{" "}
               {selectedBulan} Tahun {selectedTahun}
             </h2>
@@ -437,7 +440,7 @@ export default function Dashboard() {
           )}
         </div>
         {!page && ( // hanya tampilkan kalau di halaman utama
-          <div className="bg-white rounded-2xl p-6">
+          <div className="bg-white/90 border border-[#001f3d]/10 shadow-2xl shadow-black/5 rounded-2xl p-6">
             <TopAndilChart data={topAndil} title={selectedIndicator} />
           </div>
         )}
