@@ -71,7 +71,7 @@ export default function Header() {
       <div className="max-w-7xl px-4 sm:px-6 lg:px-8 py-2">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="items-center">
+          <div className="flex items-center">
             <img src="/images/Logo.png" className="h-28" alt="Logo" />
             {/* <img src="/favicon2.png" className="w-18" alt="Logo" /> */}
             {/* <div className="ml-3 flex flex-col">
