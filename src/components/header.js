@@ -79,7 +79,7 @@ export default function Header() {
                 
               </span>
             </div> */}
-            <span className="text-xs text-[#001f3d] italic font-bold">PORTAL INFLASI MAJENE</span>
+            <span className="text-lg text-[#001f3d] italic font-bold">PORTAL INFLASI MAJENE</span>
           </div>
 
           {/* Navigation desktop */}
