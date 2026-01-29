@@ -72,7 +72,7 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="items-center">
-            <img src="/images/Logo.png" className="w-40" alt="Logo" />
+            <img src="/images/Logo.png" className="h-28" alt="Logo" />
             {/* <img src="/favicon2.png" className="w-18" alt="Logo" /> */}
             {/* <div className="ml-3 flex flex-col">
               <span className="font-bold text-lg italic">
