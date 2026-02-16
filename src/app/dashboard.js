@@ -109,6 +109,10 @@ export default function Dashboard() {
   const [loadingAndil, setLoadingAndil] = useState(true);
   const [page, setPage] = useState(searchParams.get("page"));
   const [dataKey, setDataKey] = useState("");
+
+  const targetMin = 1.5;
+  const targetMax = 3.5;
+
   const namaBulan = [
     "Januari",
     "Februari",
@@ -205,9 +209,31 @@ export default function Dashboard() {
 
           return isNaN(num) ? null : num;
         }),
+        pointRadius: 4,
         borderColor: "#f97316",
         backgroundColor: "#fdba74",
         tension: 0.4,
+        borderWidth: 6,
+      },
+      // Target MIN
+      {
+        label: "Batas Min",
+        data: dataGraph.map(() => targetMin),
+        borderColor: "#22c55e",
+        borderDash: [4, 4],
+        pointRadius: 0,
+        borderWidth: 3,
+        fill: false,
+      },
+      // Target Max
+      {
+        label: "Batas Max",
+        data: dataGraph.map(() => targetMax),
+        borderColor: "#22c55e",
+        borderDash: [4, 4],
+        pointRadius: 0,
+        borderWidth: 3,
+        fill: false,
       },
     ],
   };
@@ -244,17 +270,19 @@ export default function Dashboard() {
       y: {
         title: {
           display: true,
-          text: dataKey, // label sumbu Y
+          text: dataKey,
           color: "#111",
           font: { size: 14, weight: "bold" },
         },
         ticks: { font: { size: 12 } },
         grid: { color: "#e5e7eb" },
         beginAtZero: false,
-        suggestedMin:
-          Math.min(...dataGraph.map((d) => Number(d[dataKey]) || 0)) - 10,
-        suggestedMax:
-          Math.max(...dataGraph.map((d) => Number(d[dataKey]) || 0)) + 10,
+        suggestedMin: Math.min(
+          ...dataGraph.map((d) => Number(d[dataKey]) || 0),
+        ),
+        suggestedMax: Math.max(
+          ...dataGraph.map((d) => Number(d[dataKey]) || 0),
+        ),
       },
     },
   };
@@ -327,10 +355,12 @@ export default function Dashboard() {
 
     // setKomoditas(result.komoditas);
     setTahun(result.tahun);
-    const bulanOptions = result.bulan.map((b) => ({
-      value: b,
-      label: getNamaBulan(b),
-    }));
+    const bulanOptions = result.bulan
+      .map((b) => ({
+        value: b,
+        label: getNamaBulan(b),
+      }))
+      .sort((a, b) => a.value - b.value);
     setBulan(bulanOptions);
     // setLoading(false); // selesai loading
   };
@@ -342,8 +372,14 @@ export default function Dashboard() {
         `/api/getAndil?flag=${selectedItem}&tahun=${selectedTahun}&bulan=${selectedBulan}`,
       );
       const result = await res.json();
-      console.log(result);
-      setData(result);
+      // console.log(result);
+      if (result && Array.isArray(result)) {
+        // setTopAndil(transformAndil(result, selectedTahun, selectedBulan, selectedIndicator));
+        setData(result);
+      } else {
+        setData([]);
+      }
+      // setData(result);
     } catch (error) {
       console.error("Gagal ambil data:", error);
       setData([]);
@@ -357,23 +393,40 @@ export default function Dashboard() {
       `/api/filteredData?nama=${selectedKomoditas}&tahun=${selectedTahun}&bulan=${selectedBulan}`,
     );
     const result = await res.json();
+    if (result && result.graph && result.filtered) {
+      setDataGraph(result.graph);
+      setValues({
+        "Inflasi MtM": result.filtered["Inflasi MtM"],
+        "Inflasi YoY": result.filtered["Inflasi YoY"],
+        "Inflasi YtD": result.filtered["Inflasi YtD"],
+        IHK: result.filtered["IHK"],
+        // Harga: result.filtered["Harga"],
+      });
 
-    setDataGraph(result.graph);
-    setValues({
-      "Inflasi MtM": result.filtered["Inflasi MtM"],
-      "Inflasi YoY": result.filtered["Inflasi YoY"],
-      "Inflasi YtD": result.filtered["Inflasi YtD"],
-      IHK: result.filtered["IHK"],
-      Harga: result.filtered["Harga"],
-    });
-
-    setPrevValues({
-      "Inflasi MtM": result.prev?.["Inflasi MtM"],
-      "Inflasi YoY": result.prev?.["Inflasi YoY"],
-      "Inflasi YtD": result.prev?.["Inflasi YtD"],
-      IHK: result.prev?.["IHK"],
-      Harga: result.prev?.["Harga"],
-    });
+      setPrevValues({
+        "Inflasi MtM": result.prev?.["Inflasi MtM"],
+        "Inflasi YoY": result.prev?.["Inflasi YoY"],
+        "Inflasi YtD": result.prev?.["Inflasi YtD"],
+        IHK: result.prev?.["IHK"],
+        // Harga: result.prev?.["Harga"],
+      });
+    } else {
+      setDataGraph([]);
+      setValues({
+        "Inflasi MtM": null,
+        "Inflasi YoY": null,
+        "Inflasi YtD": null,
+        IHK: null,
+        // Harga: null,
+      });
+      setPrevValues({
+        "Inflasi MtM": null,
+        "Inflasi YoY": null,
+        "Inflasi YtD": null,
+        IHK: null,
+        // Harga: null,
+      });
+    }
   };
 
   const onfilterKlik = async () => {
@@ -399,22 +452,21 @@ export default function Dashboard() {
       setLoading(false);
     };
     fetchFilters();
-    console.log("tahun", selectedTahun);
-    console.log("bulan", selectedBulan);
   }, []);
 
   // Kalau filter berubah → ambil data
-  // useEffect(() => {
-  //   if (!isFilterReady) return;
+  useEffect(() => {
+    // if (!isFilterReady) return;
 
-  //   const fetchFilteredData = async () => {
-  //     setLoading(true);
-  //     await getData();
-  //     setLoading(false);
-  //   };
+    const fetchFilteredData = async () => {
+      setLoading(true);
+      await selectFilterHandle();
+      await getData();
+      setLoading(false);
+    };
 
-  //   fetchFilteredData();
-  // }, [values, prevValues]);
+    fetchFilteredData();
+  }, [selectedBulan, selectedTahun]);
 
   useEffect(() => {
     const currentPage = searchParams.get("page");
@@ -446,7 +498,7 @@ export default function Dashboard() {
         {/* Header Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 md:items-center justify-between gap-4">
           <div className="">
-            <h1 className="text-3xl text-slate-900 font-extrabold tracking-tight">
+            <h1 className="text-3xl text-slate-900 font-bold tracking-tight">
               {titleHeader}
             </h1>
           </div>
@@ -457,14 +509,20 @@ export default function Dashboard() {
               <FilterSelect
                 filter="Tahun"
                 options={tahun}
-                onChange={(v) => setSelectedTahun(v)}
+                onChange={(v) => {
+                  setSelectedTahun(v);
+                  // onfilterKlik();
+                }}
                 value={selectedTahun}
                 error={errors.tahun}
               />
               <FilterSelect
                 filter="Bulan"
                 options={bulan}
-                onChange={(v) => setSelectedBulan(v)}
+                onChange={(v) => {
+                  setSelectedBulan(v);
+                  // onfilterKlik();
+                }}
                 value={selectedBulan}
                 error={errors.bulan}
               />
@@ -509,7 +567,7 @@ export default function Dashboard() {
                   : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"
               }`}
             >
-              Visualisasi Grafik
+              Grafik
             </button>
             <button
               onClick={() => setActiveTab("data")}
@@ -570,10 +628,10 @@ export default function Dashboard() {
                 </div>
 
                 {/* Tab Content */}
-                <div className="relative w-full min-h-[300px] md:min-h-[400px]">
+                <div className="relative w-full min-h-[300px] md:min-h-[450px]">
                   {activeTab === "grafik" ? (
                     /* TAB 1: GRAFIK */
-                    <div className="h-[300px] md:h-[400px]">
+                    <div className="h-[300px] lg:h-[450px]">
                       <Line
                         ref={lineChartRef}
                         data={chartData}
@@ -627,7 +685,7 @@ export default function Dashboard() {
             ) : (
               <div className="py-20 flex flex-col items-center justify-center text-slate-400 gap-3 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200">
                 <p className="italic text-sm font-medium">
-                  Belum ada data yang ditampilkan.
+                  Belum ada data yang ditampilkan / data belum tersedia.
                 </p>
               </div>
             )}
@@ -636,8 +694,6 @@ export default function Dashboard() {
 
         {/* Bottom Chart */}
         <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 md:p-8">
-          {loadingAndil && <LoadingDetail />}
-
           {dataGraph?.length > 0 ? (
             <div className="w-full">
               <FilterSelect
@@ -656,7 +712,11 @@ export default function Dashboard() {
                 error={errors.item}
               />
               <div className="mt-6">
-                <TopAndilChart data={topAndil} title={selectedIndicator} />
+                {loadingAndil ? (
+                  <LoadingDetail className="flex items-center justify-center h-[300px] md:h-[450px]" />
+                ) : (
+                  <TopAndilChart data={topAndil} title={selectedIndicator} />
+                )}
               </div>
             </div>
           ) : (

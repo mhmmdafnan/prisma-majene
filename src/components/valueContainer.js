@@ -95,15 +95,16 @@ export default function ValueContainer({
       {/* Overlay hover */}
       <div
         className="
-          absolute bottom-0 left-0 right-0
+          lg:absolute bottom-0 left-0 right-0
           bg-white/20 backdrop-blur-sm
           text-[#001f3d] font-medium
           py-3 text-center
-          opacity-0 translate-y-4
-          transition-all duration-300
-          group-hover:opacity-100
-          group-hover:translate-y-0
           flex items-center justify-center
+          transition-all duration-300
+          opacity-100 translate-y-0       
+          lg:opacity-0 lg:translate-y-4   
+          lg:group-hover:opacity-100
+          lg:group-hover:translate-y-0
         "
       >
         lihat detail →

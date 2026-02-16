@@ -101,7 +101,7 @@ export default async function handler(req, res) {
 
     
 
-    // console.log(graph);
+    console.log('graph:', graph);
     
 
     res.status(200).json({

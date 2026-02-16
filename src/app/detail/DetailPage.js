@@ -12,9 +12,12 @@ import {
   LineElement,
   Tooltip,
   Legend,
+  Title,
 } from "chart.js";
 
 import { Line } from "react-chartjs-2";
+import Loading from "@/components/Loading";
+import LoadingDetail from "@/components/LoadingDetail";
 const FilterSelect = dynamic(() => import("@/components/FilterSelect"), {
   ssr: false,
 });
@@ -51,7 +54,7 @@ export function transformAndil(data, tahun, bulan, indikator) {
   // Mapping hasil
   const mapped = filtered.map((item) => ({
     nama: item["Nama Komoditas"],
-    andil: parseFloat(item[key]) || 0,
+    andil: parseFloat(item[key]) ? parseFloat(item[key]).toFixed(2) : 0,
   }));
 
   // Urutkan desc & ambil top 10
@@ -63,7 +66,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("data");
   const [tipe, setTipe] = useState(searchParams.get("item"));
   const [item, setItem] = useState(null);
-  const [listData, setListData] = useState(null);
+  const [listData, setListData] = useState([]);
   const [dataGraph, setDataGraph] = useState([]);
   const [filterTahun, setFilterTahun] = useState([]);
   const [filterBulan, setFilterBulan] = useState([]);
@@ -73,6 +76,8 @@ export default function Dashboard() {
   const [selectedTahun, setSelectedTahun] = useState(new Date().getFullYear());
   const [selectedBulan, setSelectedBulan] = useState(new Date().getMonth());
   const [filterType, setFilterType] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [loadingFilter, setLoadingFilter] = useState(false);
   const namaBulan = [
     "Januari",
     "Februari",
@@ -95,11 +100,11 @@ export default function Dashboard() {
       {
         label: "Nilai",
         data: listData?.map((item) => item.nilai),
-        borderColor: "#FF9B00",
-        decimalPlaces: 2,
-        backgroundColor: "rgba(255,155,0,0.2)",
-        tension: 0.4,
         pointRadius: 4,
+        borderColor: "#f97316",
+        backgroundColor: "#fdba74",
+        tension: 0.4,
+        borderWidth: 6,
       },
     ],
   };
@@ -110,14 +115,36 @@ export default function Dashboard() {
       legend: { display: false },
       tooltip: {
         callbacks: {
-          label: (ctx) => `Nilai: ${ctx.raw}`,
+          label: (ctx) => `Nilai: ${Number(ctx.raw).toFixed(2)}`,
         },
       },
     },
     scales: {
+      x: {
+        title: {
+          display: true,
+          text: "Bulan", //
+          color: "#111",
+          font: {
+            size: 14,
+            weight: "bold",
+          },
+        },
+      },
       y: {
+        title: {
+          display: true,
+          text: `Nilai ${tipe}`,
+          color: "#111",
+          font: {
+            size: 14,
+            weight: "bold",
+          },
+        },
         ticks: {
-          callback: (value) => value,
+          callback: function (value) {
+            return Number(value).toFixed(2);
+          },
         },
       },
     },
@@ -141,7 +168,6 @@ export default function Dashboard() {
   };
 
   const onFilterClick = async (pilihFilter) => {
-    // console.log("Selected filter type:", pilihFilter);
     setFilterType(pilihFilter);
     const res = await fetch(`/api/flag?flag=${pilihFilter}`);
     const data = await res.json();
@@ -153,12 +179,12 @@ export default function Dashboard() {
     try {
       const response = await fetch("/api/getFilter");
       const data = await response.json();
-      console.log(data.bulan);
-      console.log(data.tahun);
-      const bulanOptions = data.bulan.map((b) => ({
-        value: b,
-        label: namaBulan[b - 1],
-      }));
+      const bulanOptions = data.bulan
+        .map((b) => ({
+          value: b,
+          label: namaBulan[b - 1],
+        }))
+        .sort((a, b) => a.value - b.value);
       setFilterBulan(bulanOptions);
       setFilterTahun(data.tahun);
     } catch (error) {
@@ -185,15 +211,21 @@ export default function Dashboard() {
       // const response = await fetch(
       //   `/api/filteredData?nama=${selectedItem}&tahun=${selectedTahun}&bulan=${selectedBulan}`,
       // );
-      const response = await fetch(
-        `/api/getDataDetail?tipe=${tipe}&nama=${selectedItem}&tahun=${selectedTahun}&bulan=${selectedBulan}`,
-      );
-      const data = await response.json();
-      // console.log("Response data:", data);
 
-      setListData(data);
-
-      console.log("ok siap tampil", listData);
+      let url = "";
+      let data = [];
+      if (selectedItem) {
+        url = `/api/getDataDetail?tipe=${tipe}&nama=${selectedItem}&tahun=${selectedTahun}&bulan=${selectedBulan}`;
+        const response = await fetch(url);
+        data = await response.json();
+      }
+      console.log("Response data:", data);
+      if (data && Array.isArray(data)) {
+        setListData(data);
+      } else {
+        setListData([]);
+      }
+      //   setListData(data);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -221,9 +253,23 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    getFilterItem();
-    getFilterPeriode();
-  }, [filterType, listData]);
+    const filterHendle = async () => {
+      setLoading(true);
+      await getData();
+      setLoading(false);
+    };
+    filterHendle();
+  }, [selectedBulan, selectedTahun, selectedItem]);
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      //   setLoadingFilter(true);
+      await getFilterItem();
+      await getFilterPeriode();
+      //   setLoadingFilter(false);
+    };
+    fetchInitialData();
+  }, [filterType]);
 
   return (
     // <div className="bg-gradient-to-br from-[#f8e269] via-[#fff7cf] to-[#FF9B00] min-h-screen">
@@ -233,12 +279,12 @@ export default function Dashboard() {
       <div className="p-6 space-y-8 max-w-7xl mx-auto">
         {/* BREADCRUMB / HEADER */}
         <div className="flex flex-col gap-1">
-          <h1 className="text-3xl text-slate-900 font-extrabold tracking-tight">
+          <h1 className="text-3xl text-slate-900 font-bold tracking-tight">
             Dashboard {tipe}
           </h1>
-          <p className="text-slate-500 text-sm font-medium">
+          {/* <p className="text-slate-500 text-sm font-medium">
             Analisis data komoditas secara mendalam
-          </p>
+          </p> */}
         </div>
 
         {/* FILTER BOX - Clean & Modern Style */}
@@ -328,7 +374,7 @@ export default function Dashboard() {
           <div className="flex bg-slate-50 p-1.5 gap-1 border-b border-slate-200">
             <button
               onClick={() => setActiveTab("data")}
-              className={`flex-1 md:flex-none px-8 py-2 text-sm font-bold rounded-xl transition-all ${
+              className={`cursor-pointer flex-1 md:flex-none px-8 py-2 text-sm font-bold rounded-xl transition-all ${
                 activeTab === "data"
                   ? "bg-white text-orange-600 shadow-sm"
                   : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"
@@ -338,82 +384,107 @@ export default function Dashboard() {
             </button>
             <button
               onClick={() => setActiveTab("grafik")}
-              className={`flex-1 md:flex-none px-8 py-2 text-sm font-bold rounded-xl transition-all ${
+              className={`cursor-pointer flex-1 md:flex-none px-8 py-2 text-sm font-bold rounded-xl transition-all ${
                 activeTab === "grafik"
                   ? "bg-white text-orange-600 shadow-sm"
                   : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"
               }`}
             >
-              Visualisasi Grafik
+              Grafik
             </button>
           </div>
 
           <div className="p-6">
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold text-slate-900 tracking-tight leading-tight">
+                Data {selectedItem} - {namaBulan[selectedBulan - 1]}{" "}
+                {selectedTahun}
+              </h2>
+              <h2 className="text-xs text-slate-500 font-medium">
+                Nilai {tipe} untuk {selectedItem}
+              </h2>
+            </div>
             {activeTab === "data" && (
-              <div className="space-y-4">
-                {Array.isArray(listData) && listData.length > 0 ? (
-                  <div className="overflow-x-auto border border-slate-100 rounded-xl">
-                    <table className="min-w-full border-collapse">
-                      <thead>
-                        <tr className="bg-orange-500 text-white">
-                          <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
-                            {filterType == 1
-                              ? "Kelompok"
-                              : filterType == 2
-                                ? "Sub-Kelompok"
-                                : "Komoditas"}
-                          </th>
-                          <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
-                            Periode
-                          </th>
-                          <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider">
-                            Nilai {tipe}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {listData.map((item, index) => (
-                          <tr
-                            key={index}
-                            className="hover:bg-orange-50/50 transition-colors group"
-                          >
-                            <td className="px-6 py-4 font-semibold text-slate-700 group-hover:text-orange-600">
-                              {item.NamaKomoditas}
-                            </td>
-                            <td className="px-6 py-4 text-slate-500 text-sm">
-                              {namaBulan[item.Bulan - 1]} {item.Tahun}
-                            </td>
-                            <td className="px-6 py-4 text-right">
-                              <span className="inline-block px-3 py-1 rounded-lg bg-orange-50 text-orange-700 font-bold">
-                                {item.nilai}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+              <div className="lg:h-[450px] space-y-4 p-4">
+                {loading ? (
+                  <LoadingDetail className="flex items-center justify-center h-full" />
                 ) : (
-                  <div className="text-center py-20 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
-                    <p className="text-slate-400 font-medium italic">
-                      Belum ada data untuk ditampilkan.
-                    </p>
-                  </div>
+                  <>
+                    {Array.isArray(listData) && listData.length > 0 ? (
+                      <div className="overflow-x-auto border border-slate-100 rounded-xl">
+                        <table className="min-w-full border-collapse">
+                          <thead>
+                            <tr className="bg-orange-500 text-white">
+                              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
+                                {filterType == 1
+                                  ? "Kelompok"
+                                  : filterType == 2
+                                    ? "Sub-Kelompok"
+                                    : "Komoditas"}
+                              </th>
+                              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
+                                Periode
+                              </th>
+                              <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider">
+                                Nilai {tipe}
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {listData.map((item, index) => (
+                              <tr
+                                key={index}
+                                className="hover:bg-orange-50/50 transition-colors group"
+                              >
+                                <td className="px-6 py-4 font-semibold text-slate-700 group-hover:text-orange-600">
+                                  {item.NamaKomoditas}
+                                </td>
+                                <td className="px-6 py-4 text-slate-500 text-sm">
+                                  {namaBulan[item.Bulan - 1]} {item.Tahun}
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                  <span className="inline-block px-3 py-1 rounded-lg bg-orange-50 text-orange-700 font-bold">
+                                    {item.nilai}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-20 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+                        <p className="text-slate-400 font-medium italic">
+                          Belum ada data untuk ditampilkan / Data belum
+                          tersedia.
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
 
             {activeTab === "grafik" && (
-              <div className="h-[450px] w-full p-2">
-                {listData?.length > 0 ? (
-                  <Line
-                    data={chartData}
-                    options={{ ...chartOptions, maintainAspectRatio: false }}
-                  />
+              <div className="lg:h-[450px] w-full p-2">
+                {loading ? (
+                  <LoadingDetail className="flex items-center justify-center h-full" />
                 ) : (
-                  <div className="flex h-full items-center justify-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400">
-                    Belum ada data grafik.
-                  </div>
+                  <>
+                    {listData?.length > 0 ? (
+                      <Line
+                        data={chartData}
+                        options={{
+                          ...chartOptions,
+                          maintainAspectRatio: false,
+                        }}
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400">
+                        Belum ada data grafik / Data belum tersedia.
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
