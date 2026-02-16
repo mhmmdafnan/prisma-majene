@@ -38,11 +38,11 @@ export default async function handler(req, res) {
     );
 
     // Extract unique values
-    const komoditas = [...new Set(data.map((item) => item["Nama Komoditas"]?.trim()))].filter(Boolean);
+    // const komoditas = [...new Set(data.map((item) => item["Nama Komoditas"]?.trim()))].filter(Boolean);
     const tahun = [...new Set(data.map((item) => item["Tahun"]?.trim()))].filter(Boolean);
     const bulan = [...new Set(data.map((item) => item["Bulan"]?.trim()))].filter(Boolean);
 
-    res.status(200).json({ komoditas, tahun, bulan });
+    res.status(200).json({ tahun, bulan });
   } catch (error) {
     console.error("Error fetching filters:", error);
     res.status(500).json({ message: "Server error" });
