@@ -3,6 +3,7 @@ import Footer from "@/components/footer";
 import Header from "@/components/header";
 import { useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -14,7 +15,10 @@ import {
 } from "chart.js";
 
 import { Line } from "react-chartjs-2";
-import FilterSelect from "@/components/FilterSelect";
+const FilterSelect = dynamic(() => import("@/components/FilterSelect"), {
+  ssr: false,
+});
+
 // import TopAndilChart from "@/components/TopAndilInflasi";
 
 ChartJS.register(
