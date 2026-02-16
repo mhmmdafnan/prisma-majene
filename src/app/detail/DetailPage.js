@@ -16,8 +16,13 @@ import {
 } from "chart.js";
 
 import { Line } from "react-chartjs-2";
-import Loading from "@/components/Loading";
-import LoadingDetail from "@/components/LoadingDetail";
+
+const Loading = dynamic(() => import("@/components/Loading"), {
+  ssr: false,
+});
+const LoadingDetail = dynamic(() => import("@/components/LoadingDetail"), {
+  ssr: false,
+});
 const FilterSelect = dynamic(() => import("@/components/FilterSelect"), {
   ssr: false,
 });
