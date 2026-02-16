@@ -697,7 +697,7 @@ export default function Dashboard() {
           {dataGraph?.length > 0 ? (
             <div className="w-full">
               <FilterSelect
-                filter="Kelompok Andil"
+                filter="Andil"
                 options={[
                   { value: "1", label: "Kelompok Pengeluaran" },
                   { value: "2", label: "Sub Kelompok Pengeluaran" },
