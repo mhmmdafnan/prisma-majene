@@ -10,6 +10,7 @@ import {
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
 import { useRef } from "react";
+import { FaFileCsv, FaFileImage } from "react-icons/fa6";
 
 ChartJS.register(
   CategoryScale,
@@ -17,58 +18,78 @@ ChartJS.register(
   BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
 );
-import { FaFileCsv, FaFileImage } from "react-icons/fa6";
 
-export default function TopAndilInflasi({ data, title }) {
+export default function TopAndilInflasi({
+  data = [],
+  title = "",
+  flagValue = "1",
+}) {
+  // Default array kosong
   const chartRef = useRef(null);
 
+  // Jika data tidak ada, tampilkan pesan kosong (Placeholder)
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[400px] border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50">
+        <p className="text-slate-400 font-medium">Data grafik tidak tersedia</p>
+      </div>
+    );
+  }
+
   const chartData = {
-    labels: data.map((d) => d.nama),
+    labels: data.map((d) => d.nama || "Tanpa Nama"),
     datasets: [
       {
         label: "Andil Inflasi",
-        data: data.map((d) => d.andil),
-        backgroundColor: "#fb923c", // orange-400
-        borderColor: "#f97316", // orange-500
-        borderWidth: 1,
+        data: data.map((d) => d.andil || 0),
+        backgroundColor: "rgba(249, 115, 22, 0.8)", // Orange 500 dengan opacity
+        hoverBackgroundColor: "#ea580c", // Orange 600
+        borderRadius: 8, // Bikin ujung bar jadi membulat
+        borderSkipped: false,
       },
     ],
   };
 
   const options = {
-    indexAxis: "y",
+    indexAxis: "y", // Horizontal Bar
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: "#fff",
-        titleColor: "#111",
-        bodyColor: "#333",
-        borderColor: "#f97316",
-        borderWidth: 1,
+        backgroundColor: "#1e293b", // Slate 800
+        padding: 12,
+        cornerRadius: 10,
+        callbacks: {
+          label: (context) => ` Andil: ${context.parsed.x}%`,
+        },
       },
     },
     scales: {
-      x: { grid: { color: "#e5e7eb" } },
+      x: {
+        grid: { display: false },
+        ticks: { color: "#64748b" },
+      },
       y: {
-        grid: { color: "#f3f4f6" },
-        ticks: { font: { size: 12 } },
+        grid: { color: "#f1f5f9" },
+        ticks: {
+          color: "#1e293b",
+          font: { weight: "600" },
+        },
       },
     },
   };
 
-  // Fungsi download grafik PNG
   const downloadChart = () => {
     if (!chartRef.current) return;
     const link = document.createElement("a");
-    link.download = "grafik_inflasi.png";
+    link.download = `Grafik_Andil_${title}.png`;
     link.href = chartRef.current.toBase64Image();
     link.click();
   };
 
-  // Fungsi download data CSV
   const downloadCSV = () => {
     const csvRows = [
       ["Nama", "Andil Inflasi"],
@@ -79,40 +100,53 @@ export default function TopAndilInflasi({ data, title }) {
       csvRows.map((e) => e.join(";")).join("\n");
     const link = document.createElement("a");
     link.href = encodeURI(csvString);
-    link.download = "data_Andil_inflasi.csv";
+    link.download = `Data_Andil_${title}.csv`;
     link.click();
   };
 
   return (
-    <>
-      {/* <div className="w-full h-[250px] sm:h-[350px] lg:h-[450px]"> */}
-      <div className="flex flex-col md:flex-row justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold mb-4 text-[#001f3d]">
-          Komoditas Penyumbang Inflasi (Andil {title.split(" ")[1]})
-        </h2>
-        <div className="flex gap-2">
+    <div className="bg-white p-2 md:p-0">
+      {" "}
+      {/* Tambah padding dikit di mobile biar gak nempel tembok */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-8">
+        <div>
+          <h2 className="text-lg md:text-xl font-extrabold text-slate-900 tracking-tight leading-tight">
+            Komoditas Penyumbang Inflasi
+          </h2>
+          <h2 className="text-xs md:text-sm text-slate-500 font-medium">
+            Andil {title?.split(" ")[1] || "Inflasi"}
+          </h2>
+        </div>
+
+        {/* Tombol dibuat full width di mobile biar gampang di-tap */}
+        <div className="flex w-full md:w-auto gap-2">
           <button
             onClick={downloadChart}
-            className="bg-[#FF9B00] hover:bg-[#FFC900] text-white px-4 w-fit py-2 rounded cursor-pointer"
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 border border-orange-200 bg-orange-50 hover:bg-orange-100 text-orange-600 px-3 py-2 md:px-4 md:py-2.5 rounded-xl transition-all font-semibold cursor-pointer text-[10px] md:text-sm"
           >
-            <FaFileImage className="inline mr-1" /> Grafik
+            <FaFileImage className="text-base md:text-lg" /> Grafik
           </button>
           <button
             onClick={downloadCSV}
-            className="bg-gray-700 text-white px-4 py-2 w-fit rounded cursor-pointer hover:bg-gray-800"
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white px-3 py-2 md:px-4 md:py-2.5 rounded-xl transition-all font-semibold cursor-pointer text-[10px] md:text-sm"
           >
-            <FaFileCsv className="inline mr-1" /> Data CSV
+            <FaFileCsv className="text-base md:text-lg" /> CSV
           </button>
         </div>
       </div>
-      <div style={{ width: "100%", height: 400 }}>
+  
+      {/* Tinggi chart dibuat dinamis: 300px di HP, 450px di Desktop */}
+      <div className="relative w-full h-[300px] md:h-[450px] bg-slate-50/30 rounded-2xl p-2 md:p-4 border border-slate-100 shadow-inner">
         <Bar
           ref={chartRef}
           data={chartData}
-          options={{ ...options, maintainAspectRatio: false }}
+          options={{
+            ...options,
+            maintainAspectRatio: false, // Penting supaya chart ngikutin tinggi container
+            responsive: true,
+          }}
         />
       </div>
-      {/* </div> */}
-    </>
+    </div>
   );
 }

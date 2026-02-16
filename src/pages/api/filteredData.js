@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   try {
     const decoded = Buffer.from(
       process.env.GOOGLE_CREDENTIALS,
-      "base64"
+      "base64",
     ).toString("utf-8");
 
     const credentials = JSON.parse(decoded);
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
       headers.reduce((obj, key, i) => {
         obj[key] = row[i] || "";
         return obj;
-      }, {})
+      }, {}),
     );
 
     // ==== Default Value ====
@@ -43,54 +43,70 @@ export default async function handler(req, res) {
     const nama = req.query.nama || defaultNama;
     const tahun = Number(req.query.tahun) || defaultTahun;
     const bulan = Number(req.query.bulan) || defaultBulan;
-    const flag = req.query.flag || null;
+    const prevBulan = bulan === 1 ? 12 : bulan - 1;
+    const prevTahun = bulan === 1 ? tahun - 1 : tahun;
+
+    let tipe = null;
+    if (req.query.tipe) {
+      tipe = req.query.tipe;
+    }
 
     // ==== Ambil data utama (bulan tertentu) ====
+
     const filtered = data.find(
       (item) =>
         item["Nama Komoditas"] === nama &&
         Number(item["Tahun"]) === tahun &&
-        Number(item["Bulan"]) === bulan &&
-        (!flag || String(item["Flag"]) === String(flag))
+        Number(item["Bulan"]) === bulan,
     );
-    let graph;
 
-    if (flag) {
-      // Kalau ada flag → ambil data spesifik bulan & tahun saja
-      graph = data.filter((item) => {
-        let itemMonth = Number(item["Bulan"]);
-        let itemYear = Number(item["Tahun"]);
-        return (
-          String(item["Flag"]) === String(flag) &&
-          itemMonth === bulan &&
-          itemYear === tahun
-        );
-      });
-    } else {
-      // Kalau ga ada flag → ambil data nama komoditas 12 bulan ke belakang
-      let monthsRange = [];
-      for (let i = 0; i < 13; i++) {
-        let m = bulan - i;
-        let y = tahun;
-        if (m <= 0) {
-          m += 12;
-          y -= 1;
-        }
-        monthsRange.push({ month: m, year: y });
+    const prev = data.find(
+      (item) =>
+        item["Nama Komoditas"] === nama &&
+        Number(item["Tahun"]) === prevTahun &&
+        Number(item["Bulan"]) === prevBulan,
+    );
+
+    // let graph = data.filter((item) => {
+    //   let itemMonth = Number(item["Bulan"]);
+    //   let itemYear = Number(item["Tahun"]);
+    //   return itemMonth === bulan && itemYear === tahun;
+    // });
+
+
+    let graph = [];
+    let monthsRange = [];
+    for (let i = 0; i < 13; i++) {
+      let m = bulan - i;
+      let y = tahun;
+      if (m <= 0) {
+        m += 12;
+        y -= 1;
       }
-
-      graph = data.filter((item) => {
-        let itemMonth = Number(item["Bulan"]);
-        let itemYear = Number(item["Tahun"]);
-        return (
-          item["Nama Komoditas"] === nama &&
-          monthsRange.some((m) => m.month === itemMonth && m.year === itemYear)
-        );
-      });
+      monthsRange.push({ month: m, year: y });
     }
 
+    graph = data.filter((item) => {
+      let itemMonth = Number(item["Bulan"]);
+      let itemYear = Number(item["Tahun"]);
+      return (
+        item["Nama Komoditas"] === nama &&
+        monthsRange.some((m) => m.month === itemMonth && m.year === itemYear)
+      );
+    }).sort((a, b) => {
+      let aDate = new Date(Number(a["Tahun"]), Number(a["Bulan"]) - 1);
+      let bDate = new Date(Number(b["Tahun"]), Number(b["Bulan"]) - 1);
+      return bDate - aDate;
+    });
+
+    
+
+    // console.log(graph);
+    
+
     res.status(200).json({
-      filtered, // data spesifik bulan ini
+      filtered,
+      prev, // data spesifik bulan ini
       graph, // 12 bulan terakhir
     });
   } catch (error) {
