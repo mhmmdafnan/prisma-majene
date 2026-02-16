@@ -165,19 +165,19 @@ export default function Dashboard() {
     }
   };
 
-  const getDataAndil = async () => {
-    try {
-      const res = await fetch(
-        `/api/getAndil?flag=${flag}&tahun=${selectedTahun}&bulan=${selectedBulan}`,
-      );
-      const result = await res.json();
-      console.log("andil ni", result);
-      setDataGraph(result);
-    } catch (error) {
-      console.error("Gagal ambil data:", error);
-      setDataGraph([]);
-    }
-  };
+  // const getDataAndil = async () => {
+  //   try {
+  //     const res = await fetch(
+  //       `/api/getAndil?flag=${flag}&tahun=${selectedTahun}&bulan=${selectedBulan}`,
+  //     );
+  //     const result = await res.json();
+  //     console.log("andil ni", result);
+  //     setDataGraph(result);
+  //   } catch (error) {
+  //     console.error("Gagal ambil data:", error);
+  //     setDataGraph([]);
+  //   }
+  // };
 
   const getData = async () => {
     try {
