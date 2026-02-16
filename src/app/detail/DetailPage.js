@@ -96,6 +96,7 @@ export default function Dashboard() {
         label: "Nilai",
         data: listData?.map((item) => item.nilai),
         borderColor: "#FF9B00",
+        decimalPlaces: 2,
         backgroundColor: "rgba(255,155,0,0.2)",
         tension: 0.4,
         pointRadius: 4,
@@ -278,8 +279,8 @@ export default function Dashboard() {
                 <FilterSelect
                   filter="Tipe"
                   options={[
-                    { value: 1, label: "Kelompok" },
-                    { value: 2, label: "Sub-Kelompok" },
+                    { value: 1, label: "Kelompok Pengeluaran" },
+                    { value: 2, label: "Sub-Kelompok Pengeluaran" },
                     { value: 3, label: "Komoditas" },
                   ]}
                   value={filterType}

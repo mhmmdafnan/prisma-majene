@@ -124,13 +124,13 @@ export default function TopAndilInflasi({
             onClick={downloadChart}
             className="flex-1 md:flex-none flex items-center justify-center gap-2 border border-orange-200 bg-orange-50 hover:bg-orange-100 text-orange-600 px-3 py-2 md:px-4 md:py-2.5 rounded-xl transition-all font-semibold cursor-pointer text-[10px] md:text-sm"
           >
-            <FaFileImage className="text-base md:text-lg" /> Grafik
+            <FaFileImage className="text-sm md:text-base" /> Grafik
           </button>
           <button
             onClick={downloadCSV}
             className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white px-3 py-2 md:px-4 md:py-2.5 rounded-xl transition-all font-semibold cursor-pointer text-[10px] md:text-sm"
           >
-            <FaFileCsv className="text-base md:text-lg" /> CSV
+            <FaFileCsv className="text-sm md:text-base" /> CSV
           </button>
         </div>
       </div>
