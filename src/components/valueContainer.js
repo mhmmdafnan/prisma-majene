@@ -61,9 +61,9 @@ export default function ValueContainer({
         outline-1 outline-[#FF9B00]/50
         shadow-2xl shadow-black/10
         rounded-2xl
-        transition-all duration-300
         hover:scale-110
         hover:outline-2 hover:outline-[#FF9B00]
+        transition-all duration-300
         flex flex-col items-center justify-center cursor-pointer`}
     >
       <p className="text-md text-[#001f3d] font-extralight px-4 pt-2">

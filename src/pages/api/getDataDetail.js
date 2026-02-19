@@ -90,6 +90,7 @@ export default async function handler(req, res) {
         .map((item) => ({
           Tahun: Number(item["Tahun"]),
           Bulan: Number(item["Bulan"]),
+          Kode: String(item["Kode Komoditas"]),
           NamaKomoditas: item["Nama Komoditas"],
           nilai: Number(item[tipe]),
         }))

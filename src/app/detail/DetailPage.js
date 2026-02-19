@@ -2,7 +2,7 @@
 import Footer from "@/components/footer";
 import Header from "@/components/header";
 import { useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import {
   Chart as ChartJS,
@@ -14,6 +14,8 @@ import {
   Legend,
   Title,
 } from "chart.js";
+
+import { FaFileCsv, FaFileImage } from "react-icons/fa6";
 
 import { Line } from "react-chartjs-2";
 
@@ -27,7 +29,9 @@ const FilterSelect = dynamic(() => import("@/components/FilterSelect"), {
   ssr: false,
 });
 
-// import TopAndilChart from "@/components/TopAndilInflasi";
+const TopAndilChart = dynamic(() => import("@/components/TopAndilInflasi"), {
+  ssr: false,
+});
 
 ChartJS.register(
   CategoryScale,
@@ -78,11 +82,13 @@ export default function Dashboard() {
   const [errors, setErrors] = useState({});
 
   const [selectedItem, setSelectedItem] = useState();
+  const [selectedKodeItem, setSelectedKodeItem] = useState();
   const [selectedTahun, setSelectedTahun] = useState(new Date().getFullYear());
   const [selectedBulan, setSelectedBulan] = useState(new Date().getMonth());
+  const [selectedType, setSelectedType] = useState();
   const [filterType, setFilterType] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [loadingFilter, setLoadingFilter] = useState(false);
+  const [loadingAndil, setLoadingAndil] = useState(false);
   const namaBulan = [
     "Januari",
     "Februari",
@@ -97,14 +103,25 @@ export default function Dashboard() {
     "November",
     "Desember",
   ];
+
+  const lineChartRef = useRef(null);
+
+  const sortedGraph = [...listData].sort((a, b) => {
+    const yearA = Number(a.Tahun),
+      yearB = Number(b.Tahun);
+    const monthA = Number(a.Bulan),
+      monthB = Number(b.Bulan);
+    return yearA !== yearB ? yearA - yearB : monthA - monthB;
+  });
+
   const chartData = {
-    labels: listData?.map(
+    labels: sortedGraph?.map(
       (item) => `${namaBulan[item.Bulan - 1]} ${item.Tahun}`,
     ),
     datasets: [
       {
         label: "Nilai",
-        data: listData?.map((item) => item.nilai),
+        data: sortedGraph?.map((item) => item.nilai),
         pointRadius: 4,
         borderColor: "#f97316",
         backgroundColor: "#fdba74",
@@ -162,6 +179,31 @@ export default function Dashboard() {
     tipe,
   );
 
+  // Fungsi download grafik PNG
+  const downloadLineChart = () => {
+    if (!lineChartRef.current) return;
+    const link = document.createElement("a");
+    link.download = `grafik_${tipe.replace(/\s+/g, "_")}_${selectedItem}.png`;
+    link.href = lineChartRef.current.toBase64Image();
+    link.click();
+  };
+
+  // Fungsi download data CSV
+  const downloadLineCSV = () => {
+    if (!listData || listData.length === 0) return;
+
+    const headers = ["Tahun", "Bulan", tipe];
+    const rows = listData.map((d) => [d.Tahun, d.Bulan, d.nilai]);
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers, ...rows].map((r) => r.join(";")).join("\n");
+
+    const link = document.createElement("a");
+    link.href = encodeURI(csvContent);
+    link.download = `data_${tipe.replace(/\s+/g, "_")}_${selectedItem}.csv`;
+    link.click();
+  };
+
   const getFilterItem = async () => {
     try {
       const response = await fetch("/api/getKelompok?flag=" + filterType);
@@ -197,26 +239,28 @@ export default function Dashboard() {
     }
   };
 
-  // const getDataAndil = async () => {
-  //   try {
-  //     const res = await fetch(
-  //       `/api/getAndil?flag=${flag}&tahun=${selectedTahun}&bulan=${selectedBulan}`,
-  //     );
-  //     const result = await res.json();
-  //     console.log("andil ni", result);
-  //     setDataGraph(result);
-  //   } catch (error) {
-  //     console.error("Gagal ambil data:", error);
-  //     setDataGraph([]);
-  //   }
-  // };
+  const getDataAndil = async () => {
+    // Tambahin parameter kodeFilter
+    try {
+      // Tambahkan &kode_filter=${kodeFilter} di ujung URL
+      if (!selectedKodeItem) {
+        setDataGraph([]);
+        return;
+      }
+      const res = await fetch(
+        `/api/getAndilDetail?flag=${selectedType}&tahun=${selectedTahun}&bulan=${selectedBulan}&kode_filter=${selectedKodeItem}`,
+      );
+
+      const result = await res.json();
+      setDataGraph(result);
+    } catch (error) {
+      console.error("Gagal ambil data:", error);
+      setDataGraph([]);
+    }
+  };
 
   const getData = async () => {
     try {
-      // const response = await fetch(
-      //   `/api/filteredData?nama=${selectedItem}&tahun=${selectedTahun}&bulan=${selectedBulan}`,
-      // );
-
       let url = "";
       let data = [];
       if (selectedItem) {
@@ -224,13 +268,12 @@ export default function Dashboard() {
         const response = await fetch(url);
         data = await response.json();
       }
-      console.log("Response data:", data);
       if (data && Array.isArray(data)) {
         setListData(data);
       } else {
         setListData([]);
       }
-      //   setListData(data);
+      // setListData(data);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -261,6 +304,7 @@ export default function Dashboard() {
     const filterHendle = async () => {
       setLoading(true);
       await getData();
+      await getDataAndil();
       setLoading(false);
     };
     filterHendle();
@@ -276,9 +320,17 @@ export default function Dashboard() {
     fetchInitialData();
   }, [filterType]);
 
-  return (
-    // <div className="bg-gradient-to-br from-[#f8e269] via-[#fff7cf] to-[#FF9B00] min-h-screen">
+  useEffect(() => {
+    const fetchAndilData = async () => {
+      setLoadingAndil(true);
+      await getDataAndil();
 
+      setLoadingAndil(false);
+    };
+    fetchAndilData();
+  }, [selectedType, selectedKodeItem]);
+
+  return (
     <div className="bg-[#F8FAFC] min-h-screen">
       <Header />
       <div className="p-6 space-y-8 max-w-7xl mx-auto">
@@ -287,13 +339,10 @@ export default function Dashboard() {
           <h1 className="text-3xl text-slate-900 font-bold tracking-tight">
             Dashboard {tipe}
           </h1>
-          {/* <p className="text-slate-500 text-sm font-medium">
-            Analisis data komoditas secara mendalam
-          </p> */}
         </div>
 
-        {/* FILTER BOX - Clean & Modern Style */}
-        <div className="bg-white border border-slate-200 shadow-sm rounded-2xl ">
+        {/* FILTER BOX */}
+        <div className="bg-white border border-slate-200 shadow-sm rounded-2xl">
           <div className="bg-slate-50 border-b border-slate-200 px-6 py-3">
             <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider">
               Parameter Filter
@@ -350,13 +399,26 @@ export default function Dashboard() {
                   options={
                     item && item.result
                       ? item.result.map((itm, index) => ({
-                          value: itm,
-                          label: itm,
+                          value: itm.NamaKomoditas,
+                          label: itm.NamaKomoditas,
                         }))
                       : []
                   }
                   value={selectedItem}
-                  onChange={(value) => setSelectedItem(value)}
+                  onChange={(value) => {
+                    setSelectedItem(value);
+                    setSelectedKodeItem(
+                      item.result.find((itm) => itm.NamaKomoditas === value)
+                        ?.Kode,
+                    );
+                    if (filterType === 1) {
+                      setSelectedType(2);
+                    } else if (filterType === 2) {
+                      setSelectedType(3);
+                    } else {
+                      setSelectedType(3);
+                    }
+                  }}
                   error={errors.item}
                 />
               </div>
@@ -373,9 +435,10 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
         {/* MAIN CONTENT CARD */}
         <div className="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
-          {/* TABS CUSTOM */}
+          {/* TABS */}
           <div className="flex bg-slate-50 p-1.5 gap-1 border-b border-slate-200">
             <button
               onClick={() => setActiveTab("data")}
@@ -400,43 +463,68 @@ export default function Dashboard() {
           </div>
 
           <div className="p-6">
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold text-slate-900 tracking-tight leading-tight">
-                Data {selectedItem} - {namaBulan[selectedBulan - 1]}{" "}
-                {selectedTahun}
-              </h2>
-              <h2 className="text-xs text-slate-500 font-medium">
-                Nilai {tipe} untuk {selectedItem}
-              </h2>
+            <div className="mb-6 flex justify-between items-start">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900 tracking-tight capitalize">
+                  Data {selectedItem} - {namaBulan[selectedBulan - 1]}{" "}
+                  {selectedTahun}
+                </h2>
+                <h3 className="text-xs text-slate-500 font-medium mt-1">
+                  Analisis Nilai {tipe} untuk {selectedItem}
+                </h3>
+              </div>
+
+              <div className="flex gap-2">
+                {activeTab === "data" && listData?.length > 0 && (
+                  <button
+                    onClick={downloadLineCSV}
+                    className="cursor-pointer flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors"
+                  >
+                    <FaFileCsv /> CSV
+                  </button>
+                )}
+                {activeTab === "grafik" && listData?.length > 0 && (
+                  <button
+                    onClick={downloadLineChart}
+                    className="cursor-pointer flex items-center gap-2 bg-orange-50 border border-orange-200 text-orange-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-orange-100 transition-colors"
+                  >
+                    <FaFileImage /> Grafik PNG
+                  </button>
+                )}
+              </div>
             </div>
-            {activeTab === "data" && (
-              <div className="lg:h-[450px] space-y-4 p-4">
-                {loading ? (
-                  <LoadingDetail className="flex items-center justify-center h-full" />
-                ) : (
-                  <>
-                    {Array.isArray(listData) && listData.length > 0 ? (
-                      <div className="overflow-x-auto border border-slate-100 rounded-xl">
-                        <table className="min-w-full border-collapse">
-                          <thead>
-                            <tr className="bg-orange-500 text-white">
-                              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
-                                {filterType == 1
-                                  ? "Kelompok"
-                                  : filterType == 2
-                                    ? "Sub-Kelompok"
-                                    : "Komoditas"}
-                              </th>
-                              <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
-                                Periode
-                              </th>
-                              <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider">
-                                Nilai {tipe}
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100">
-                            {listData.map((item, index) => (
+
+            {loading ? (
+              <div className="h-[400px] flex items-center justify-center">
+                <LoadingDetail />
+              </div>
+            ) : (
+              <>
+                {activeTab === "data" && (
+                  <div className="relative border border-slate-100 rounded-xl overflow-hidden">
+                    {/* Container scroll hanya untuk tabel */}
+                    <div className="overflow-y-auto overflow-x-auto max-h-[450px]">
+                      <table className="min-w-full border-collapse">
+                        <thead className="sticky top-0 z-10 bg-orange-500 text-white">
+                          <tr>
+                            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
+                              {filterType == 1
+                                ? "Kelompok"
+                                : filterType == 2
+                                  ? "Sub-Kelompok"
+                                  : "Komoditas"}
+                            </th>
+                            <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">
+                              Periode
+                            </th>
+                            <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider">
+                              Nilai {tipe}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 bg-white">
+                          {listData?.length > 0 ? (
+                            listData.map((item, index) => (
                               <tr
                                 key={index}
                                 className="hover:bg-orange-50/50 transition-colors group"
@@ -453,31 +541,28 @@ export default function Dashboard() {
                                   </span>
                                 </td>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <div className="text-center py-20 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
-                        <p className="text-slate-400 font-medium italic">
-                          Belum ada data untuk ditampilkan / Data belum
-                          tersedia.
-                        </p>
-                      </div>
-                    )}
-                  </>
+                            ))
+                          ) : (
+                            <tr>
+                              <td
+                                colSpan="3"
+                                className="py-20 text-center text-slate-400 italic"
+                              >
+                                Data tidak tersedia
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 )}
-              </div>
-            )}
 
-            {activeTab === "grafik" && (
-              <div className="lg:h-[450px] w-full p-2">
-                {loading ? (
-                  <LoadingDetail className="flex items-center justify-center h-full" />
-                ) : (
-                  <>
+                {activeTab === "grafik" && (
+                  <div className="h-[450px] bg-slate-50/30 rounded-2xl p-4 border border-slate-100">
                     {listData?.length > 0 ? (
                       <Line
+                        ref={lineChartRef}
                         data={chartData}
                         options={{
                           ...chartOptions,
@@ -485,29 +570,64 @@ export default function Dashboard() {
                         }}
                       />
                     ) : (
-                      <div className="flex h-full items-center justify-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400">
-                        Belum ada data grafik / Data belum tersedia.
+                      <div className="h-full flex items-center justify-center text-slate-400 italic">
+                        Grafik tidak tersedia
                       </div>
                     )}
-                  </>
+                  </div>
                 )}
-              </div>
+              </>
             )}
           </div>
         </div>
 
-        {/* Bottom Chart */}
-        {/* <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 md:p-8">
-          {dataGraph?.length > 0 ? (
-            <div className="w-full">
-              <TopAndilChart data={topAndil} title={filterType === 1 ? "Kelompok" : filterType === 2 ? "Sub-Kelompok" : "Komoditas"} />
-            </div>
-          ) : (
-            <div className="py-10 flex items-center justify-center text-slate-400 italic text-sm">
-              Belum ada data yang ditampilkan.
-            </div>
-          )}
-        </div> */}
+        {/* BOTTOM CHART - ANDIL */}
+        {filterType == 1 && tipe != "IHK" && (
+          <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 md:p-8">
+            {dataGraph?.length > 0 ? (
+              <div className="space-y-6">
+                <div className="w-full md:w-72">
+                  <FilterSelect
+                    filter="Lihat Berdasarkan"
+                    options={[
+                      { value: "2", label: "Sub Kelompok Pengeluaran" },
+                      { value: "3", label: "Komoditas" },
+                    ]}
+                    onChange={(v) => {
+                      setSelectedType(v);
+                      if (errors.item)
+                        setErrors((prev) => ({ ...prev, item: null }));
+                    }}
+                    value={selectedType}
+                    error={errors.item}
+                  />
+                </div>
+                <div className="min-h-[400px]">
+                  {loadingAndil ? (
+                    <div className="h-[400px] flex items-center justify-center">
+                      <LoadingDetail />
+                    </div>
+                  ) : (
+                    <TopAndilChart
+                      data={topAndil}
+                      title={
+                        filterType === 1
+                          ? "Kelompok"
+                          : filterType === 2
+                            ? "Sub-Kelompok"
+                            : "Komoditas"
+                      }
+                    />
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="py-20 flex items-center justify-center bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 italic">
+                Data andil belum tersedia.
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <Footer />
     </div>

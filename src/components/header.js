@@ -4,18 +4,21 @@ import {
   HiHome,
   HiChartSquareBar,
   HiCurrencyDollar,
+  HiInformationCircle,
   HiMenu,
   HiX,
 } from "react-icons/hi";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const searchParams = useSearchParams();
-  const page = searchParams.get("page") || "dashboard";
+  const pathname = usePathname();
+
+  // Helper function untuk cek apakah menu sedang aktif
+  const isActive = (path) => pathname === path;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -31,6 +34,12 @@ export default function Header() {
       icon: <HiHome size={18} />,
       href: "/",
       page: "dashboard",
+    },
+    {
+      name: "Tentang",
+      icon: <HiInformationCircle size={18} />,
+      href: "/about",
+      page: "about",
     },
     // {
     //   name: "IHK",
@@ -74,7 +83,7 @@ export default function Header() {
           {/* Logo */}
           <div className="flex items-center gap-3">
             <img src="/images/Logo.png" className="w-14 sm:w-16" alt="Logo" />
-            <span className="hidden sm:block text-xs text-[#001f3d] italic font-bold">
+            <span className="text-sm md:text-xl text-[#001f3d] italic font-bold">
               PORTAL INFLASI MAJENE
             </span>
           </div>
@@ -82,14 +91,13 @@ export default function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
             {navItems.map((item) => {
-              const isActive = page === item.page;
               return (
                 <Link
                   key={item.name}
                   href={item.href}
                   className={`flex items-center gap-2 text-sm font-medium transition
                 ${
-                  isActive
+                  isActive(item.href)
                     ? "text-[#FF9B00] border-b-2 border-[#FF9B00]"
                     : "text-[#001f3d] hover:text-[#FF9B00]"
                 }
@@ -121,7 +129,6 @@ export default function Header() {
       >
         <nav className="bg-white border-t border-[#001f3d]/10 px-4 py-3 space-y-2">
           {navItems.map((item) => {
-            const isActive = page === item.page;
             return (
               <Link
                 key={item.name}
@@ -129,7 +136,7 @@ export default function Header() {
                 onClick={() => setMenuOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg transition
               ${
-                isActive
+                isActive(item.href)
                   ? "bg-[#fff7cf] text-[#FF9B00] font-semibold"
                   : "text-[#001f3d] hover:bg-gray-100"
               }

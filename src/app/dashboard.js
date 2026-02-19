@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState,  } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
 import {
@@ -103,7 +103,7 @@ export default function Dashboard() {
   const [dataGraph, setDataGraph] = useState([]);
   const [activeTab, setActiveTab] = useState("grafik");
   const [selectedItem, setSelectedItem] = useState(3);
-  const [selectedIndicator, setSelectedIndicator] = useState("Inflasi MtM");
+  const [selectedIndicator, setSelectedIndicator] = useState("Inflasi YoY");
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [loadingAndil, setLoadingAndil] = useState(true);
@@ -159,8 +159,8 @@ export default function Dashboard() {
   const downloadLineCSV = () => {
     if (!dataGraph || dataGraph.length === 0) return;
 
-    const headers = ["Bulan", selectedIndicator];
-    const rows = dataGraph.map((d) => [d.Bulan, d[selectedIndicator] || 0]);
+    const headers = ["Tahun", "Bulan", selectedIndicator];
+    const rows = dataGraph.map((d) => [d.Tahun, d.Bulan, d[selectedIndicator] || 0]);
     const csvContent =
       "data:text/csv;charset=utf-8," +
       [headers, ...rows].map((r) => r.join(";")).join("\n");
@@ -185,6 +185,7 @@ export default function Dashboard() {
       ) || 0
     );
   };
+  
 
   const sortedGraph = [...dataGraph].sort((a, b) => {
     const yearA = Number(a.Tahun),
@@ -195,7 +196,8 @@ export default function Dashboard() {
   });
 
   const chartData = {
-    labels: sortedGraph.map((d) => `${d.Bulan}/${d.Tahun}`),
+    // labels: sortedGraph.map((d) => `${d.Bulan}/${d.Tahun}`),
+    labels: sortedGraph.map((item) => `${namaBulan[item.Bulan - 1]} ${item.Tahun}`),
     datasets: [
       {
         label: dataKey,
@@ -216,25 +218,28 @@ export default function Dashboard() {
         borderWidth: 6,
       },
       // Target MIN
-      {
-        label: "Batas Min",
-        data: dataGraph.map(() => targetMin),
-        borderColor: "#22c55e",
-        borderDash: [4, 4],
-        pointRadius: 0,
-        borderWidth: 3,
-        fill: false,
-      },
-      // Target Max
-      {
-        label: "Batas Max",
-        data: dataGraph.map(() => targetMax),
-        borderColor: "#22c55e",
-        borderDash: [4, 4],
-        pointRadius: 0,
-        borderWidth: 3,
-        fill: false,
-      },
+      ...(selectedIndicator === "Inflasi YoY"
+        ? [
+            {
+              label: "Batas bawah pengendalian inflasi daerah",
+              data: sortedGraph.map(() => targetMin),
+              borderColor: "#22c55e",
+              borderDash: [4, 4],
+              pointRadius: 0,
+              borderWidth: 3,
+              fill: false,
+            },
+            {
+              label: "Batas atas pengendalian inflasi daerah",
+              data: sortedGraph.map(() => targetMax),
+              borderColor: "#22c55e",
+              borderDash: [4, 4],
+              pointRadius: 0,
+              borderWidth: 3,
+              fill: false,
+            },
+          ]
+        : []),
     ],
   };
 
@@ -242,7 +247,19 @@ export default function Dashboard() {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { display: false },
+      legend: {
+        display: true,
+        position: "top", // top | bottom | left | right
+        labels: {
+          color: "#111",
+          font: {
+            size: 12,
+            weight: "600",
+          },
+          usePointStyle: true, // 🔥
+          pointStyle: "line", //
+        },
+      },
       tooltip: {
         backgroundColor: "#fff",
         titleColor: "#000",
@@ -539,7 +556,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stat Cards - Grid yang lebih lega */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid :grid-cols-2 lg:grid-cols-4 gap-6">
           {content.map((item, idx) => (
             <ValueContainer
               key={idx}
@@ -549,7 +566,7 @@ export default function Dashboard() {
               onClick={() => onDetailValueKlik(item.title)}
               // Pastikan di dalam ValueContainer, lo kasih hover effect: hover:border-orange-500
               warna={
-                "bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow"
+                "bg-white border border-slate-100 shadow-sm hover:shadow-md "
               }
             />
           ))}

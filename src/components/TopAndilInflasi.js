@@ -136,7 +136,7 @@ export default function TopAndilInflasi({
       </div>
   
       {/* Tinggi chart dibuat dinamis: 300px di HP, 450px di Desktop */}
-      <div className="relative w-full h-[300px] md:h-[450px] bg-slate-50/30 rounded-2xl p-2 md:p-4 border border-slate-100 shadow-inner">
+      <div className="relative w-full overflow-auto h-[300px] md:h-[450px] bg-slate-50/30 rounded-2xl p-2 md:p-4 border border-slate-100 shadow-inner">
         <Bar
           ref={chartRef}
           data={chartData}

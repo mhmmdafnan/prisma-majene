@@ -2,8 +2,6 @@ import { google } from "googleapis";
 
 export default async function handler(req, res) {
   try {
-    console.log(req.query);
-
     const decoded = Buffer.from(
       process.env.GOOGLE_CREDENTIALS,
       "base64",

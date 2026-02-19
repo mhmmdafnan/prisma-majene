@@ -20,6 +20,7 @@ export default async function handler(req, res) {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: "1R9_IijsAoi9UYZvipw7zkzyIsbCibR-R9BSUYSAcp7U",
       range: "Sheet1!A:E",
+      valueRenderOption: "FORMATTED_VALUE", //
     });
 
     const values = response.data.values;
@@ -28,6 +29,7 @@ export default async function handler(req, res) {
 
     const namaIndex = header.indexOf("Nama Komoditas");
     const flagIndex = header.indexOf("Flag");
+    const kodeIndex = header.indexOf("Kode Komoditas");
 
     const normalizeNama = (row) =>
       (row[namaIndex] || "").toString().trim().toLowerCase();
@@ -51,9 +53,20 @@ export default async function handler(req, res) {
       }, {}),
     );
 
-    result = result.map((row) => row["Nama Komoditas"]);
-    // const len = result.length;
+    result = result.map((row) => {
+      const kodeRaw = row["Kode Komoditas"];
 
+      // Jika kodenya cuma 1 digit (seperti "1"), tambahkan "0" di depannya
+      const kodeFormatted =
+        String(kodeRaw).trim().length === 1
+          ? String(kodeRaw).padStart(2, "0")
+          : String(kodeRaw);
+
+      return {
+        NamaKomoditas: row["Nama Komoditas"],
+        Kode: kodeFormatted,
+      };
+    });
     // res.status(200).json({ data:result, jumlah: len });
     res.status(200).json({ result });
   } catch (error) {

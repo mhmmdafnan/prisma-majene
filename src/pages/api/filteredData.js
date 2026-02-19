@@ -73,7 +73,6 @@ export default async function handler(req, res) {
     //   return itemMonth === bulan && itemYear === tahun;
     // });
 
-
     let graph = [];
     let monthsRange = [];
     for (let i = 0; i < 13; i++) {
@@ -86,23 +85,20 @@ export default async function handler(req, res) {
       monthsRange.push({ month: m, year: y });
     }
 
-    graph = data.filter((item) => {
-      let itemMonth = Number(item["Bulan"]);
-      let itemYear = Number(item["Tahun"]);
-      return (
-        item["Nama Komoditas"] === nama &&
-        monthsRange.some((m) => m.month === itemMonth && m.year === itemYear)
-      );
-    }).sort((a, b) => {
-      let aDate = new Date(Number(a["Tahun"]), Number(a["Bulan"]) - 1);
-      let bDate = new Date(Number(b["Tahun"]), Number(b["Bulan"]) - 1);
-      return bDate - aDate;
-    });
-
-    
-
-    console.log('graph:', graph);
-    
+    graph = data
+      .filter((item) => {
+        let itemMonth = Number(item["Bulan"]);
+        let itemYear = Number(item["Tahun"]);
+        return (
+          item["Nama Komoditas"] === nama &&
+          monthsRange.some((m) => m.month === itemMonth && m.year === itemYear)
+        );
+      })
+      .sort((a, b) => {
+        let aDate = new Date(Number(a["Tahun"]), Number(a["Bulan"]) - 1);
+        let bDate = new Date(Number(b["Tahun"]), Number(b["Bulan"]) - 1);
+        return bDate - aDate;
+      });
 
     res.status(200).json({
       filtered,
