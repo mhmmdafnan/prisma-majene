@@ -10,12 +10,8 @@ import {
   HiOutlineScale,
   HiOutlineTrendingUp,
 } from "react-icons/hi";
-import { useState } from "react";
-import { useSearchParams } from "next/navigation";
 
 export default function About() {
-  const searchParams = useSearchParams();
-  const [page, setPage] = useState(searchParams.get("page"));
   return (
     <div className="bg-[#F8FAFC] min-h-screen font-sans">
       <Header />
