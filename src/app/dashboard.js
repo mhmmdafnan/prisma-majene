@@ -556,7 +556,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stat Cards - Grid yang lebih lega */}
-        <div className="grid :grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           {content.map((item, idx) => (
             <ValueContainer
               key={idx}
